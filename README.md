@@ -1,73 +1,130 @@
-# React + TypeScript + Vite
+# Cake Gallery
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A responsive photo gallery for browsing custom cake designs, built with React, TypeScript, and Vite.
 
-Currently, two official plugins are available:
+## What It Does
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Cake Gallery displays a filterable grid of custom cake photos. Visitors can browse all cakes or filter by themed category (Harry Potter, Mario, Shadow and Bone, Looshkin, Sonic, Worst Witch, Easter, and Other). Dark mode is enabled by default and persists across sessions.
 
-## React Compiler
+## How It Works
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Tech Stack
 
-## Expanding the ESLint configuration
+| Layer | Technology |
+|---|---|
+| Framework | React 18 + TypeScript |
+| Build tool | Vite |
+| UI components | Chakra UI |
+| Animation | Framer Motion |
+| Styling | Emotion (CSS-in-JS via Chakra) |
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Architecture
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+The app is a fully static single-page application — no backend, no API calls, no database. All cake data is defined in source code and all images are bundled as static assets.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+├── main.tsx              # Entry point — mounts React, provides Chakra UI theme
+├── App.tsx               # Root layout — manages selected category state
+├── theme.ts              # Chakra UI theme (dark mode default, custom grays)
+├── data/
+│   └── cakes.ts          # All cake entries and category definitions
+├── hooks/
+│   └── useCakes.ts       # Filters cakes by selected category
+└── components/
+    ├── NavBar.tsx         # Header with app title and dark/light mode toggle
+    ├── CategoryList.tsx   # Sidebar category filter buttons (desktop only)
+    ├── CakeGrid.tsx       # Responsive grid — renders a CakeCard per cake
+    └── CakeCard.tsx       # Individual cake: image, name, category badge
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Data Flow
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1. `App.tsx` holds the `selectedCategory` state and renders the layout grid
+2. `CategoryList` displays category buttons and calls back to `App` when one is clicked
+3. `CakeGrid` passes `selectedCategory` to the `useCakes` hook
+4. `useCakes` returns either all cakes or those matching the selected category
+5. `CakeGrid` maps the result into `CakeCard` components
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Layout
+
+- **Desktop (lg and above):** navigation bar at top, category sidebar on the left, cake grid fills the right
+- **Mobile:** stacked layout — navigation bar on top, category sidebar hidden, cake grid below
+
+### Adding New Cakes
+
+1. Copy the image file into `public/photos/`
+2. Open [src/data/cakes.ts](src/data/cakes.ts) and add an entry to the `cakes` array:
+
+```ts
+{ id: 42, name: "My New Cake", imagePath: "/photos/my-new-cake.jpg", category: "Other" }
 ```
+
+3. To add a new category, add the string to the `categories` array in the same file and use it as a `category` value in cake entries.
+
+## Running Locally
+
+**Prerequisites:** Node.js 18 or later
+
+```bash
+# Install dependencies
+npm install
+
+# Start the development server (hot reload enabled)
+npm run dev
+# App available at http://localhost:5173
+
+# Build for production
+npm run build
+# Output written to dist/
+
+# Preview the production build locally
+npm run preview
+```
+
+## Deploying to Vercel
+
+This project is a static Vite app and deploys to Vercel with zero configuration.
+
+### Option 1: Deploy from GitHub (recommended)
+
+1. Push this repository to GitHub
+2. Go to [vercel.com](https://vercel.com) and sign in (or create a free account)
+3. Click **Add New > Project**
+4. Import your GitHub repository
+5. Vercel auto-detects Vite — the settings below are filled in automatically:
+
+   | Setting | Value |
+   |---|---|
+   | Framework Preset | Vite |
+   | Build Command | `npm run build` |
+   | Output Directory | `dist` |
+   | Install Command | `npm install` |
+
+6. Click **Deploy**
+
+Every push to `main` will trigger a new deployment automatically.
+
+### Option 2: Deploy via Vercel CLI
+
+```bash
+# Install the Vercel CLI
+npm install -g vercel
+
+# From the project root, run:
+vercel
+
+# Follow the prompts — accept the auto-detected Vite settings
+# Your site URL is printed when the deploy completes
+
+# To deploy to production:
+vercel --prod
+```
+
+### Environment Variables
+
+This app has no environment variables. No `.env` setup is needed in the Vercel dashboard.
+
+### Custom Domain
+
+After deploying, go to your project in the Vercel dashboard, open **Settings > Domains**, and add your custom domain. Vercel handles SSL automatically.
